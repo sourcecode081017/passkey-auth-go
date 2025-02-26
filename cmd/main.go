@@ -8,5 +8,6 @@ import (
 
 func main() {
 	fmt.Println("Starting HTTP server on port 8080")
+	//dbPool := db.GetConnectionPool()
 	rest.StartHttpServer()
 }
