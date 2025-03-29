@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sourcecode081017/passkey-auth-go/internal/middleware"
 	"github.com/sourcecode081017/passkey-auth-go/internal/models"
 	"github.com/sourcecode081017/passkey-auth-go/webauthn"
 )
@@ -30,6 +31,7 @@ func StartHttpServer() {
 
 	router := gin.Default()
 	// Global endpoint
+	router.Use(middleware.CORSMiddleware())
 	router.GET("/", healthCheck)
 	router.POST("passkey-auth/register-initiate/:username", registerInitiate)
 	// Start the HTTP server with GIN
