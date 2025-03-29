@@ -1,0 +1,75 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+.username-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.75em;
+  margin: 1em auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: border-color 200ms, box-shadow 200ms;
+}
+
+.username-input:focus {
+  border-color: #646cff;
+  box-shadow: 0 0 8px rgba(100, 108, 255, 0.5);
+  outline: none;
+}
+
+.button-group {
+  display: inline-block; /* Ensure buttons are treated as separate elements */
+  padding: 0.75em 1.5em;
+  margin: 1em;
+  font-size: 1rem;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 200ms, transform 100ms;
+}
+
+.button-group:active {
+  transform: scale(0.98);
+}
+
+.button-group.secondary {
+  background-color: #888;
+}
+
+.button-group.secondary:hover {
+  background-color: #666;
+}
