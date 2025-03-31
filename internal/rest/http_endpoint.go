@@ -27,6 +27,25 @@ func registerInitiate(c *gin.Context) {
 
 }
 
+func registerComplete(c *gin.Context) {
+	username := c.Param("username")
+	webauthnUser := *models.GetUser(username)
+	// Pass the HTTP request to WebAuthnRegisterComplete
+	httpRequest := c.Request
+	err := webauthn.WebAuthnRegisterComplete(httpRequest, &webauthnUser)
+	// Verify the registration response
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Registration successful",
+	})
+}
+
 func StartHttpServer() {
 
 	router := gin.Default()
@@ -34,6 +53,7 @@ func StartHttpServer() {
 	router.Use(middleware.CORSMiddleware())
 	router.GET("/", healthCheck)
 	router.POST("passkey-auth/register-initiate/:username", registerInitiate)
+	router.POST("passkey-auth/register-complete/:username", registerComplete)
 	// Start the HTTP server with GIN
 	err := router.Run("0.0.0.0:8080")
 	if err != nil {
