@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -47,6 +48,16 @@ func (c *RedisCache) Set(ctx context.Context, key string, value interface{}, exp
 // Delete removes a key from Redis
 func (c *RedisCache) Delete(ctx context.Context, key string) error {
 	return c.client.Del(ctx, key).Err()
+}
+
+func (c *RedisCache) Keys(ctx context.Context, pattern string) ([]string, error) {
+
+	result, err := c.client.Keys(ctx, pattern).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve keys with pattern %s: %v", pattern, err)
+	}
+
+	return result, nil
 }
 
 // Close closes the Redis client connection
