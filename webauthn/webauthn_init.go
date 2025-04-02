@@ -6,7 +6,7 @@ func InitWebAuthn() *webauthn.WebAuthn {
 	wautn, err := webauthn.New(&webauthn.Config{
 		RPDisplayName: "Passkey Auth Go",
 		RPID:          "localhost",
-		RPOrigins:     []string{"http://localhost:8080"},
+		RPOrigins:     []string{"http://localhost:8080", "http://localhost:5173"}, // This should match your domain
 	})
 	if err != nil {
 		panic(err)

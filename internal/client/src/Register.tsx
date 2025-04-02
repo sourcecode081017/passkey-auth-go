@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { create } from '@github/webauthn-json'
+import { create, parseCreationOptionsFromJSON } from '@github/webauthn-json/browser-ponyfill'
 
 interface RegisterProps {
   username: string
@@ -35,14 +35,13 @@ function Register({ username }: RegisterProps) {
 
       // Step 2: Get the challenge data from the server
       const publicKeyOptions = await response.json()
-      // log the publicKeyOptions to see the challenge and other parameters
-        console.log('PublicKeyOptions:', publicKeyOptions)
+      const parsedOptions = parseCreationOptionsFromJSON(publicKeyOptions.options)
 
       // Step 3: Create credentials using the webauthn-json library
-      const credential = await create(publicKeyOptions)
+    const credential = await create(parsedOptions)
 
       // Step 4: Send the credential to your server for verification
-      const verifyResponse = await fetch('http://localhost:8080/passkey-auth/register-complete', {
+      const verifyResponse = await fetch(`http://localhost:8080/passkey-auth/register-complete/${encodeURIComponent(username)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

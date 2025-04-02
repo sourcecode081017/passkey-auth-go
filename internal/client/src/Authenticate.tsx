@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { get } from '@github/webauthn-json'
+import { get, parseRequestOptionsFromJSON} from '@github/webauthn-json/browser-ponyfill'
 
 interface AuthenticateProps {
   username: string
@@ -22,8 +22,8 @@ function Authenticate({ username }: AuthenticateProps) {
 
     try {
       // Step 1: Call your Go backend to initiate authentication
-      const response = await fetch(`http://localhost:8080/passkey-auth/authenticate-begin/${encodeURIComponent(username)}`, {
-        method: 'GET',
+      const response = await fetch(`http://localhost:8080/passkey-auth/auth-initiate/${encodeURIComponent(username)}`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -35,12 +35,13 @@ function Authenticate({ username }: AuthenticateProps) {
 
       // Step 2: Get the challenge data from the server
       const publicKeyOptions = await response.json()
+      const parsedOptions = parseRequestOptionsFromJSON(publicKeyOptions.options)
 
       // Step 3: Get credentials using the webauthn-json library
-      const credential = await get(publicKeyOptions)
+      const credential = await get(parsedOptions)
 
       // Step 4: Send the credential to your server for verification
-      const verifyResponse = await fetch('http://localhost:8080/passkey-auth/authenticate-complete', {
+      const verifyResponse = await fetch(`http://localhost:8080/passkey-auth/auth-complete/${encodeURIComponent(username)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

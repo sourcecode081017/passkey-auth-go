@@ -1,6 +1,10 @@
 package models
 
-import "github.com/go-webauthn/webauthn/webauthn"
+import (
+	"fmt"
+
+	"github.com/go-webauthn/webauthn/webauthn"
+)
 
 type User struct {
 	Id          []byte
@@ -22,6 +26,7 @@ func (u *User) WebAuthnDisplayName() string {
 }
 
 func (u *User) WebAuthnCredentials() []webauthn.Credential {
+	fmt.Printf("WebAuthnCredentials called, returning %d credentials", len(u.Credentials))
 	return u.Credentials
 }
 
