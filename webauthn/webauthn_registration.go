@@ -48,7 +48,7 @@ func WebAuthnRegisterComplete(r *http.Request, user *models.User) error {
 	webauthn := InitWebAuthn()
 
 	// Retrieve session data from Redis
-	sessionData, err := getSessionData(user)
+	sessionData, err := getSessionData(user, "WEBAUTHN_REGISTER")
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func saveSessionData(user *models.User, sessionData *webauthn.SessionData, prefi
 	return nil
 }
 
-func getSessionData(user *models.User) (*webauthn.SessionData, error) {
+func getSessionData(user *models.User, prefix string) (*webauthn.SessionData, error) {
 	redis_cache, err := cache.NewRedisCache("localhost:6379", "", 0)
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis: %v", err)
@@ -105,7 +105,7 @@ func getSessionData(user *models.User) (*webauthn.SessionData, error) {
 	defer redis_cache.Close()
 
 	ctx := context.Background()
-	redisKey := fmt.Sprintf("WEBAUTHN_REGISTER_%s", user.Username)
+	redisKey := fmt.Sprintf("%s_%s", prefix, user.Username)
 
 	// Get the value from Redis
 	sessionDataJSON, err := redis_cache.Get(ctx, redisKey)

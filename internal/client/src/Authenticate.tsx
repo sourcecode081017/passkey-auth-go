@@ -41,7 +41,7 @@ function Authenticate({ username }: AuthenticateProps) {
       const credential = await get(parsedOptions)
 
       // Step 4: Send the credential to your server for verification
-      const verifyResponse = await fetch('http://localhost:8080/passkey-auth/auth-complete', {
+      const verifyResponse = await fetch(`http://localhost:8080/passkey-auth/auth-complete/${encodeURIComponent(username)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

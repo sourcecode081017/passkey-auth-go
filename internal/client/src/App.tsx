@@ -18,7 +18,7 @@ function App() {
           <img src={goLogo} className="logo" alt="Go logo" />
         </a>
       </div>
-      <h1>Passkey Authentication</h1>
+      <h2>Passkey Registration and Authentication</h2>
       <div>
         <input
           type="text"

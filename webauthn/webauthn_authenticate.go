@@ -15,6 +15,7 @@ func WebAuthnAuthBegin(user *models.User) *protocol.CredentialAssertion {
 	if err != nil {
 		fmt.Printf("Error getting existing credentials: %v", err)
 	}
+	user.Credentials = credentials // ensure the user has the latest credentials
 	if len(credentials) == 0 {
 		panic("No credentials found for user")
 	}
@@ -26,7 +27,7 @@ func WebAuthnAuthBegin(user *models.User) *protocol.CredentialAssertion {
 		}
 		allowList = append(allowList, descriptor)
 	}
-	options, sessionData, err := _webauthn.BeginLogin(user, webauthn.WithAllowedCredentials(allowList))
+	credentialAssertion, sessionData, err := _webauthn.BeginLogin(user, webauthn.WithAllowedCredentials(allowList))
 	if err != nil {
 		panic(err)
 	}
@@ -36,14 +37,21 @@ func WebAuthnAuthBegin(user *models.User) *protocol.CredentialAssertion {
 		panic(err)
 	}
 
-	return options
+	return credentialAssertion
 }
 
 func WebAuthnAuthComplete(r *http.Request, user *models.User) error {
 	_webauthn := InitWebAuthn()
-
+	credentials, err := GetUserCredentials(user)
+	if err != nil {
+		fmt.Printf("Error getting existing credentials: %v", err)
+	}
+	user.Credentials = credentials // ensure the user has the latest credentials
+	if len(credentials) == 0 {
+		panic("No credentials found for user")
+	}
 	// Retrieve session data from Redis
-	sessionData, err := getSessionData(user)
+	sessionData, err := getSessionData(user, "WEBAUTHN_AUTH")
 	if err != nil {
 		return err
 	}
