@@ -76,6 +76,33 @@ func authComplete(c *gin.Context) {
 	})
 }
 
+func getPassKeys(c *gin.Context) {
+	username := c.Param("username")
+	if username == "" {
+		c.JSON(400, gin.H{
+			"error": "Username is required",
+		})
+		return
+	}
+	keys, err := webauthn.GetWebAuthnKeys(username)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to retrieve keys",
+		})
+		return
+	}
+	if len(keys) == 0 {
+		c.JSON(404, gin.H{
+			"error": "No keys found for user",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"keys": keys,
+	})
+}
+
 func StartHttpServer() {
 
 	router := gin.Default()
@@ -86,6 +113,7 @@ func StartHttpServer() {
 	router.POST("passkey-auth/register-complete/:username", registerComplete)
 	router.POST("passkey-auth/auth-initiate/:username", authInitiate)
 	router.POST("passkey-auth/auth-complete/:username", authComplete)
+	router.GET("passkey-auth/:username/keys", getPassKeys)
 	// Start the HTTP server with GIN
 	err := router.Run("0.0.0.0:8080")
 	if err != nil {
