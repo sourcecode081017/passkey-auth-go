@@ -2,8 +2,7 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import goLogo from './assets/Go-Logo_Blue.svg'
 import './App.css'
-import Register from './Register'
-import Authenticate from './Authenticate'
+import PasskeyRegisterAuth from './PasskeyRegisterAuthenticate'
 
 function App() {
   const [username, setUsername] = useState('')
@@ -27,10 +26,7 @@ function App() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
-        <div className="button-group">
-          <Register username={username} /> &nbsp; &nbsp; &nbsp; &nbsp;
-          <Authenticate username={username} />
-        </div>
+        <PasskeyRegisterAuth username={username} />
       </div>
     </>
   )
