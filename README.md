@@ -1,4 +1,6 @@
 # passkey-auth-go
+Simple app using go and react to illustrate passkey authentication
+This app uses go for webauthentication ceremonies and react as frontend.
 
 ## Getting started
 To start the app, you can use the `make` command. Follow these steps:
