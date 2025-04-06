@@ -4,10 +4,21 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sourcecode081017/passkey-auth-go/internal/cache"
 	"github.com/sourcecode081017/passkey-auth-go/internal/middleware"
 	"github.com/sourcecode081017/passkey-auth-go/internal/models"
 	"github.com/sourcecode081017/passkey-auth-go/webauthn"
 )
+
+type RestHandler struct {
+	redisCache *cache.RedisCache
+}
+
+func NewRestHandler(redisCache *cache.RedisCache) *RestHandler {
+	return &RestHandler{
+		redisCache: redisCache,
+	}
+}
 
 func healthCheck(c *gin.Context) {
 	c.JSON(200, gin.H{
@@ -15,10 +26,13 @@ func healthCheck(c *gin.Context) {
 	})
 }
 
-func registerInitiate(c *gin.Context) {
+func (r *RestHandler) registerInitiate(c *gin.Context) {
 	username := c.Param("username")
 	webauthnUser := *models.GetUser(username)
-	optionsData := webauthn.WebAuthnRegisterBegin(&webauthnUser)
+	redisCache := r.redisCache
+	// set cache object in context
+	c.Set("cache", redisCache)
+	optionsData := webauthn.WebAuthnRegisterBegin(c, &webauthnUser)
 	fmt.Println("Options: ", optionsData)
 	c.JSON(200, gin.H{
 		"message": "OK",
@@ -27,12 +41,15 @@ func registerInitiate(c *gin.Context) {
 
 }
 
-func registerComplete(c *gin.Context) {
+func (r *RestHandler) registerComplete(c *gin.Context) {
 	username := c.Param("username")
 	webauthnUser := *models.GetUser(username)
 	// Pass the HTTP request to WebAuthnRegisterComplete
 	httpRequest := c.Request
-	err := webauthn.WebAuthnRegisterComplete(httpRequest, &webauthnUser)
+	redisCache := r.redisCache
+	// set cache object in context
+	c.Set("cache", redisCache)
+	err := webauthn.WebAuthnRegisterComplete(c, httpRequest, &webauthnUser)
 	// Verify the registration response
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -46,10 +63,26 @@ func registerComplete(c *gin.Context) {
 	})
 }
 
-func authInitiate(c *gin.Context) {
+func (r *RestHandler) authInitiate(c *gin.Context) {
 	username := c.Param("username")
+	redisCache := r.redisCache
+	// set cache object in context
+	c.Set("cache", redisCache)
+	exists, err := webauthn.CheckUserExists(c, username)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	if !exists {
+		c.JSON(404, gin.H{
+			"error": "User not found",
+		})
+		return
+	}
 	webauthnUser := *models.GetUser(username)
-	optionsData := webauthn.WebAuthnAuthBegin(&webauthnUser)
+	optionsData := webauthn.WebAuthnAuthBegin(c, &webauthnUser)
 	fmt.Println("Options: ", optionsData)
 	c.JSON(200, gin.H{
 		"message": "OK",
@@ -57,12 +90,15 @@ func authInitiate(c *gin.Context) {
 	})
 }
 
-func authComplete(c *gin.Context) {
+func (r *RestHandler) authComplete(c *gin.Context) {
 	username := c.Param("username")
 	webauthnUser := *models.GetUser(username)
 	// Pass the HTTP request to WebAuthnAuthComplete
 	httpRequest := c.Request
-	err := webauthn.WebAuthnAuthComplete(httpRequest, &webauthnUser)
+	redisCache := r.redisCache
+	// set cache object in context
+	c.Set("cache", redisCache)
+	err := webauthn.WebAuthnAuthComplete(c, httpRequest, &webauthnUser)
 	// Verify the authentication response
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -76,7 +112,7 @@ func authComplete(c *gin.Context) {
 	})
 }
 
-func getPassKeys(c *gin.Context) {
+func (r *RestHandler) getPassKeys(c *gin.Context) {
 	username := c.Param("username")
 	if username == "" {
 		c.JSON(400, gin.H{
@@ -84,16 +120,13 @@ func getPassKeys(c *gin.Context) {
 		})
 		return
 	}
-	keys, err := webauthn.GetWebAuthnKeys(username)
+	redisCache := r.redisCache
+	// set cache object in context
+	c.Set("cache", redisCache)
+	keys, err := webauthn.GetWebAuthnKeys(c, username)
 	if err != nil {
 		c.JSON(500, gin.H{
 			"error": "Failed to retrieve keys",
-		})
-		return
-	}
-	if len(keys) == 0 {
-		c.JSON(404, gin.H{
-			"error": "No keys found for user",
 		})
 		return
 	}
@@ -103,17 +136,53 @@ func getPassKeys(c *gin.Context) {
 	})
 }
 
-func StartHttpServer() {
+func (r *RestHandler) deleteUserKey(c *gin.Context) {
+	username := c.Param("username")
+	// get credentialId from body
+	var requestBody struct {
+		CredentialId string `json:"passkeyId"`
+	}
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		c.JSON(400, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+	credentialId := requestBody.CredentialId
+	if username == "" || credentialId == "" {
+		c.JSON(400, gin.H{
+			"error": "Username and credentialId are required",
+		})
+		return
+	}
+	redisCache := r.redisCache
+	// set cache object in context
+	c.Set("cache", redisCache)
+	err := webauthn.DeleteUserKey(c, username, credentialId)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Failed to delete key",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Key deleted successfully",
+	})
+}
+
+func (r *RestHandler) StartHttpServer() {
 
 	router := gin.Default()
 	// Global endpoint
 	router.Use(middleware.CORSMiddleware())
 	router.GET("/", healthCheck)
-	router.POST("passkey-auth/register-initiate/:username", registerInitiate)
-	router.POST("passkey-auth/register-complete/:username", registerComplete)
-	router.POST("passkey-auth/auth-initiate/:username", authInitiate)
-	router.POST("passkey-auth/auth-complete/:username", authComplete)
-	router.GET("passkey-auth/:username/keys", getPassKeys)
+	router.POST("passkey-auth/register-initiate/:username", r.registerInitiate)
+	router.POST("passkey-auth/register-complete/:username", r.registerComplete)
+	router.POST("passkey-auth/auth-initiate/:username", r.authInitiate)
+	router.POST("passkey-auth/auth-complete/:username", r.authComplete)
+	router.GET("passkey-auth/:username/keys", r.getPassKeys)
+	router.DELETE("passkey-auth/:username/keys", r.deleteUserKey)
 	// Start the HTTP server with GIN
 	err := router.Run("0.0.0.0:8080")
 	if err != nil {

@@ -8,9 +8,10 @@ import {
 
 interface RegisterAuthProps {
   username: string;
+  onAuthSuccess?: () => void;
 }
 
-function PasskeyRegisterAuthenticate({ username }: RegisterAuthProps) {
+function PasskeyRegisterAuthenticate({ username, onAuthSuccess }: RegisterAuthProps) {
   const formatMessage = (baseMessage: string, additionalMessage?: string) => {
     return additionalMessage
       ? `${baseMessage} ${additionalMessage}`
@@ -114,7 +115,10 @@ function PasskeyRegisterAuthenticate({ username }: RegisterAuthProps) {
       );
 
       if (!response.ok) {
-        throw new Error(`Server responded with status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(
+          `${errorData.error}`
+        );
       }
 
       // Step 2: Get the challenge data from the server
@@ -148,6 +152,11 @@ function PasskeyRegisterAuthenticate({ username }: RegisterAuthProps) {
 
       const result = await verifyResponse.json();
       setMessage(formatMessage(result.message));
+      
+      // Call the onAuthSuccess callback if authentication was successful
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
     } catch (error) {
       console.error("Authentication error:", error);
       setError(
@@ -176,7 +185,7 @@ function PasskeyRegisterAuthenticate({ username }: RegisterAuthProps) {
         onClick={handleAuthenticate}
         disabled={isAuthenticating}
       >
-        {isRegistering ? "Authenticating..." : "Authenticate"}
+        {isAuthenticating ? "Authenticating..." : "Authenticate"}
       </button>
       {error && <p className="error">{error}</p>}
       {message && <p className="message">{message}</p>}

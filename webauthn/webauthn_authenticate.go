@@ -1,6 +1,7 @@
 package webauthn
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -9,9 +10,9 @@ import (
 	"github.com/sourcecode081017/passkey-auth-go/internal/models"
 )
 
-func WebAuthnAuthBegin(user *models.User) *protocol.CredentialAssertion {
+func WebAuthnAuthBegin(ctx context.Context, user *models.User) *protocol.CredentialAssertion {
 	_webauthn := InitWebAuthn()
-	credentials, err := GetUserCredentials(user)
+	credentials, err := GetUserCredentials(ctx, user)
 	if err != nil {
 		fmt.Printf("Error getting existing credentials: %v", err)
 	}
@@ -32,7 +33,7 @@ func WebAuthnAuthBegin(user *models.User) *protocol.CredentialAssertion {
 		panic(err)
 	}
 	// save session data to redis
-	err = saveSessionData(user, sessionData, "WEBAUTHN_AUTH")
+	err = saveSessionData(ctx, user, sessionData, "WEBAUTHN_AUTH")
 	if err != nil {
 		panic(err)
 	}
@@ -40,9 +41,9 @@ func WebAuthnAuthBegin(user *models.User) *protocol.CredentialAssertion {
 	return credentialAssertion
 }
 
-func WebAuthnAuthComplete(r *http.Request, user *models.User) error {
+func WebAuthnAuthComplete(ctx context.Context, r *http.Request, user *models.User) error {
 	_webauthn := InitWebAuthn()
-	credentials, err := GetUserCredentials(user)
+	credentials, err := GetUserCredentials(ctx, user)
 	if err != nil {
 		fmt.Printf("Error getting existing credentials: %v", err)
 	}
@@ -51,7 +52,7 @@ func WebAuthnAuthComplete(r *http.Request, user *models.User) error {
 		panic("No credentials found for user")
 	}
 	// Retrieve session data from Redis
-	sessionData, err := getSessionData(user, "WEBAUTHN_AUTH")
+	sessionData, err := getSessionData(ctx, user, "WEBAUTHN_AUTH")
 	if err != nil {
 		return err
 	}
