@@ -29,7 +29,7 @@ function App() {
           <img src={goLogo} className="logo" alt="Go logo" />
         </a>
       </div>
-      <h2>Passkey Registration and Authentication</h2>
+      <h1>Passkey Registration and Authentication</h1>
       
       {!isAuthenticated ? (
         <div>

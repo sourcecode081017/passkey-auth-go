@@ -58,3 +58,10 @@ func (c *RedisCache) Keys(ctx context.Context, pattern string) ([]string, error)
 func (c *RedisCache) Close() error {
 	return c.client.Close()
 }
+
+func (c *RedisCache) Ping() error {
+	if err := c.client.Ping(context.Background()).Err(); err != nil {
+		return fmt.Errorf("failed to ping Redis: %v", err)
+	}
+	return nil
+}

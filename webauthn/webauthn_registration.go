@@ -71,10 +71,9 @@ func WebAuthnRegisterComplete(ctx context.Context, r *http.Request, user *models
 }
 
 func saveSessionData(ctx context.Context, user *models.User, sessionData *webauthn.SessionData, prefix string) error {
-	redis_cache, err := cache.NewRedisCache("localhost:6379", "", 0)
-	if err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
-		return err
+	redisCache := ctx.Value("cache").(*cache.RedisCache)
+	if redisCache == nil {
+		return fmt.Errorf("cache not found in context")
 	}
 	sessionDataJSON, err := json.Marshal(sessionData)
 	if err != nil {
@@ -84,7 +83,7 @@ func saveSessionData(ctx context.Context, user *models.User, sessionData *webaut
 	redisKey := fmt.Sprintf("%s_%s", prefix, user.Username)
 
 	// Set a value
-	err = redis_cache.Set(ctx, redisKey, sessionDataJSON, 60*time.Second)
+	err = redisCache.Set(ctx, redisKey, sessionDataJSON, 60*time.Second)
 	if err != nil {
 		log.Fatalf("Failed to set value in Redis: %v", err)
 		return err
