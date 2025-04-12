@@ -59,9 +59,15 @@ func WebAuthnAuthComplete(ctx context.Context, r *http.Request, user *models.Use
 	fmt.Printf("session data: %+v\n", sessionData)
 
 	// Complete the authentication process
-	_, err = _webauthn.FinishLogin(user, *sessionData, r)
+	credentialData, err := _webauthn.FinishLogin(user, *sessionData, r)
 	if err != nil {
 		fmt.Printf("Error finishing authentication: %v\n", err)
+		return err
+	}
+	// Update the last used time for the credential
+	err = UpdateCredentialData(ctx, user, credentialData)
+	if err != nil {
+		fmt.Printf("Error updating credential last used time: %v\n", err)
 		return err
 	}
 
