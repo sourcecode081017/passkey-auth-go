@@ -2,6 +2,7 @@ package webauthn
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -59,9 +60,16 @@ func WebAuthnAuthComplete(ctx context.Context, r *http.Request, user *models.Use
 	fmt.Printf("session data: %+v\n", sessionData)
 
 	// Complete the authentication process
-	_, err = _webauthn.FinishLogin(user, *sessionData, r)
+	credentialData, err := _webauthn.FinishLogin(user, *sessionData, r)
 	if err != nil {
 		fmt.Printf("Error finishing authentication: %v\n", err)
+		return err
+	}
+	// Update the last used time for the credential
+	credentialId := base64.StdEncoding.EncodeToString(credentialData.ID)
+	err = UpdateLastUsedAt(ctx, user.Username, credentialId)
+	if err != nil {
+		fmt.Printf("Error updating last used time of credential: %v\n", err)
 		return err
 	}
 

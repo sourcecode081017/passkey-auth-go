@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 
 interface PasskeyInfo {
-  id: string;
-  transport: string[];
-  authenticator: {
-    AAGUID: string;
-    signCount: number;
+  Credential: {
+    id: string;
+    transport: string[];
+    authenticator: {
+      AAGUID: string;
+    };
   };
+  createdAt: string;
+  lastUsedAt: string;
 }
 
 interface UserDashboardProps {
@@ -90,6 +93,19 @@ function UserDashboard({ username, onLogout }: UserDashboardProps) {
     return id;
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZoneName: "short",
+    }).format(date);
+  };
+
   return (
     <div className="user-dashboard">
       <h2>Welcome, {username}!</h2>
@@ -111,21 +127,22 @@ function UserDashboard({ username, onLogout }: UserDashboardProps) {
                 <th>Credential ID</th>
                 <th>Transports</th>
                 <th>AAGUID</th>
-                <th>Sign Count</th>
-                <th>Actions</th>
+                <th>Created At</th>
+                <th>Last Used At</th>
               </tr>
             </thead>
             <tbody>
               {passkeys.map((passkey) => (
-                <tr key={passkey.id}>
-                  <td title={passkey.id}>{formatId(passkey.id)}</td>
-                  <td>{passkey.transport.join(", ")}</td>
-                  <td>{passkey.authenticator.AAGUID}</td>
-                  <td>{passkey.authenticator.signCount}</td>
+                <tr key={passkey.Credential.id}>
+                  <td title={passkey.Credential.id}>{passkey.Credential.id}</td>
+                  <td>{passkey.Credential.transport.join(", ")}</td>
+                  <td>{passkey.Credential.authenticator.AAGUID}</td>
+                  <td>{formatDate(passkey.createdAt)}</td>
+                  <td>{passkey.lastUsedAt ? formatDate(passkey.lastUsedAt) : "Never Used"}</td>
                   <td>
                     <button
                       className="btn-delete"
-                      onClick={() => handleDeletePasskey(passkey.id)}
+                      onClick={() => handleDeletePasskey(passkey.Credential.id)}
                     >
                       Delete
                     </button>

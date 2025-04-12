@@ -125,8 +125,15 @@ func saveCredentialData(ctx context.Context, user *models.User, credential *weba
 
 	// Base64 encode the credential ID for use in the Redis key
 	credentialIDBase64 := base64.StdEncoding.EncodeToString(credential.ID)
+	passkeyCredential := &PasskeyCredential{
+		Credential: credential,
+		CreatedAt: func() *time.Time {
+			t := time.Now()
+			return &t
+		}(),
+	}
 
-	credentialJSON, err := json.Marshal(credential)
+	credentialJSON, err := json.Marshal(passkeyCredential)
 	if err != nil {
 		log.Printf("Failed to marshal credential data: %v", err)
 		return err
@@ -169,13 +176,13 @@ func GetUserCredentials(ctx context.Context, user *models.User) ([]webauthn.Cred
 			continue
 		}
 
-		var credential webauthn.Credential
-		if err := json.Unmarshal([]byte(credentialJSON), &credential); err != nil {
+		var passkeyCredential PasskeyCredential
+		if err := json.Unmarshal([]byte(credentialJSON), &passkeyCredential); err != nil {
 			log.Printf("Failed to unmarshal credential data: %v", err)
 			continue
 		}
 
-		credentials = append(credentials, credential)
+		credentials = append(credentials, *passkeyCredential.Credential)
 	}
 
 	return credentials, nil
