@@ -42,12 +42,15 @@ func UpdateLastUsedAt(ctx context.Context, username string, credentialId string)
 	if err != nil {
 		return fmt.Errorf("failed to get key from Redis: %v", err)
 	}
+	if credentialJSON == "" {
+		return fmt.Errorf("credential not found in Redis")
+	}
 	var passkeyCredential PasskeyCredential
 	err = json.Unmarshal([]byte(credentialJSON), &passkeyCredential)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal credential data: %v", err)
 	}
-	newPasskeyCredential := &PasskeyCredential{
+	newPasskeyCredential := PasskeyCredential{
 		Credential: passkeyCredential.Credential,
 		CreatedAt:  passkeyCredential.CreatedAt,
 		LastUsedAt: func() *time.Time {
@@ -55,11 +58,11 @@ func UpdateLastUsedAt(ctx context.Context, username string, credentialId string)
 			return &t
 		}(),
 	}
-	credentialJSON, err = json.Marshal(*newPasskeyCredential)
+	newCredentialJSON, err := json.Marshal(newPasskeyCredential)
 	if err != nil {
 		return fmt.Errorf("failed to marshal credential data: %v", err)
 	}
-	err = redisCache.Set(ctx, key, credentialJSON, 0)
+	err = redisCache.Set(ctx, key, newCredentialJSON, 0)
 	if err != nil {
 		return fmt.Errorf("failed to set value in Redis: %v", err)
 	}

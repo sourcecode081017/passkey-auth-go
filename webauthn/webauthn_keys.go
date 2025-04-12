@@ -14,7 +14,7 @@ import (
 
 type PasskeyCredential struct {
 	Credential *webauthn.Credential
-	CreatedAt  *time.Time `json:"createdAt,omitempty"`
+	CreatedAt  *time.Time `json:"createdAt"`
 	LastUsedAt *time.Time `json:"lastUsedAt,omitempty"`
 }
 
