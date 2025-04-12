@@ -20,3 +20,5 @@ This will build and start the application.
 
 ## APP UI
 
+https://github.com/user-attachments/assets/ee113d26-b179-45e0-bc1f-f550db82bb7e
+
